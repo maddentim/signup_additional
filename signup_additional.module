@@ -1,0 +1,75 @@
+<?php
+// $Id: signup_confirm_email.module,v 1.1.2.2 2009/08/18 15:14:22 dww Exp $
+
+/**
+ * @file
+ * The Signup additional module is an add-on for the Signup module to
+ * allow a user to add additional people when they sign up for content on
+ * the site.  It adds a button to the signup form asking if the user
+ * what to add additional people to their signup.  If they click the button
+ * an AHAH function is called that allows them to enter the number of  
+ * additional people they want to signup.
+ */
+
+/**
+ * Implementation of hook_menu().
+ */
+function signup_additional_menu() {
+  $items = array();
+
+  $items['signup_additional/ahah'] = array(
+    'page callback' => 'signup_additional_change_ahah',
+    'type' => MENU_CALLBACK,
+    'file' => 'signup_additional.inc',
+    'access callback' => TRUE,
+  );
+
+  return $items;
+}
+
+/**
+ * Implement hook_form_alter().
+ */
+function signup_additional_form_alter(&$form, &$form_state, $form_id) {
+  if ($form_id == 'signup_form' || $form_id == 'signup_edit_form') {
+    module_load_include('inc', 'signup_additional', 'signup_additional');
+    signup_additional_alter_signup_form($form, $form_state, $form_id);
+  }
+}
+
+function signup_additional_signup_data_alter(&$signup, $signup_form) {
+  //TODO set count_towards_limit to the total signed up.  need to make sure this is including the user.
+  $count = 1;
+  $count += $signup_form['signup_additional'];
+  $signup->count_towards_limit = $count;
+}
+
+/**
+ * Find the count for a signup.
+ */
+
+function _signup_additional_signup_count($nid, $uid, $mail = NULL) {
+
+  if ($uid == 0) {
+    $count = db_result(db_query("SELECT count_towards_limit FROM {signup_log} WHERE nid = %d AND uid = %d AND anon_mail = '%s'", $nid, $uid, $mail));
+  } 
+  else {
+    $count = db_result(db_query("SELECT count_towards_limit FROM {signup_log} WHERE nid = %d AND uid = %d", $nid, $uid));
+  }
+  return $count;
+}
+
+/**
+ * Alter the signup_pay amount to add the e-mail confirmation functionality.
+ */
+
+function signup_additional_signup_pay_adjust($payment) {
+
+  $count = _signup_additional_signup_count($payment['nid'], $payment['uid'], $payment['mail']);
+  if (!empty($count)) {
+    $payment['amount'] = $payment['amount'] * $count;
+  }
+  
+  return $payment;
+}
+

@@ -1,0 +1,10 @@
+; $Id: signup_additional.info,v 1.1.2.1 2010/11/24 tmm Exp $
+name = "Signup additional"
+description = "Allows users to add additional people to their signup."
+dependencies[] = "signup"
+package = "Signup"
+version = "6.x-1.0"
+core = "6.x"
+project = "signup"
+project status url = "http://internal.connect2mrkt.com/fserver"
+
